@@ -1,10 +1,12 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
-    [Header("Movement Config")]
+    [Header("Config Player")]
     [SerializeField] float moveSpeed = 6f;
+    [SerializeField] public static int moneyScore = 0;
 
     [Header("Reference Inputs")]
     [SerializeField] InputActionReference moveAction;
