@@ -10,6 +10,9 @@ TagManager:
   - Seat4
   - Seat2
   - Seat0
+  - Food
+  - Counter
+  - PizzaPegar
   layers:
   - Default
   - TransparentFX
