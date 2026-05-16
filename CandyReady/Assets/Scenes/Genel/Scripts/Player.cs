@@ -1,3 +1,4 @@
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,6 +8,7 @@ public class Player : MonoBehaviour
     [Header("Config Player")]
     [SerializeField] float moveSpeed = 6f;
     [SerializeField] public static int moneyScore = 0;
+    [SerializeField] TextMeshProUGUI textMoney;
 
     [Header("Reference Inputs")]
     [SerializeField] InputActionReference moveAction;
@@ -34,6 +36,7 @@ public class Player : MonoBehaviour
     {
         ReadInput();
         Movement();
+        textMoney.text = "MONEY: " + moneyScore;
     }
 
     void ReadInput()
