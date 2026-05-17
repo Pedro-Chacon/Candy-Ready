@@ -13,6 +13,11 @@ TagManager:
   - Food
   - Counter
   - PizzaPegar
+  - Seat5
+  - Seat6
+  - Seat7
+  - NPC
+  - ExitPoint
   layers:
   - Default
   - TransparentFX

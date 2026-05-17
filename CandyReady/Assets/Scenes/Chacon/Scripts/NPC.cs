@@ -1,6 +1,7 @@
 using MoreMountains.Tools;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 public class NPC : MonoBehaviour
@@ -11,6 +12,11 @@ public class NPC : MonoBehaviour
 
     [Header("Seats")]
     [SerializeField] SeatChair[] seats;
+    [SerializeField] public float TimeEating = 5f;
+
+    [Header("Order Bubble")]
+    [SerializeField] GameObject orderBubble;
+    [SerializeField] TMPro.TextMeshProUGUI orderText;
 
 
     public int candyQuantity = 0;
@@ -36,8 +42,8 @@ public class NPC : MonoBehaviour
     void Start()
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
+        DesactiveBubble();
         ChangeState(NPCState.GoingToCounter);
-
     }
 
 
@@ -46,8 +52,21 @@ public class NPC : MonoBehaviour
         if (Input.GetButtonDown("Jump"))
         {
             ChangeState(NPCState.GoingToSeat);
+            DesactiveBubble();
         }
     }
+
+    public void ActiveBubble()
+    {
+        orderBubble.SetActive(true);
+        orderText.enabled = true;
+    }
+    public void DesactiveBubble()
+    {
+        orderBubble.SetActive(false);   
+        orderText.enabled = false;
+    }
+
 
     void ChangeState(NPCState newState)
     {
@@ -77,8 +96,9 @@ public class NPC : MonoBehaviour
 
     IEnumerator EatAndLeave()
     {
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(TimeEating);
         print("terminou de comer");
+        //AQUI PRECISAVA DEIXAR SEAT.OCCUPIED = FALSE
         navMeshAgent.destination = exit.transform.position;
     }
 
@@ -106,6 +126,8 @@ public class NPC : MonoBehaviour
 
         print("Criou Pedido");
         candyQuantity = Random.Range(1, 5);
+        ActiveBubble();
+        orderText.text = candyQuantity.ToString();
         print("quantidade do pedido: " + candyQuantity);
 
     }
@@ -120,6 +142,12 @@ public class NPC : MonoBehaviour
             
         }
 
+        if (other.gameObject.CompareTag("ExitPoint"))
+        {
+            Destroy(gameObject);
+        }
+
+        #region SeatsTags
         if (other.gameObject.CompareTag("Seat0"))
         {
             print("Sentou assento 0");
@@ -145,8 +173,37 @@ public class NPC : MonoBehaviour
             ChangeState(NPCState.Leaving);
 
         }
+        if (other.gameObject.CompareTag("Seat4"))
+        {
+            print("Sentou assento 4");
+            ChangeState(NPCState.Leaving);
 
+        }
+        if (other.gameObject.CompareTag("Seat5"))
+        {
+            print("Sentou assento 5");
+            ChangeState(NPCState.Leaving);
+
+        }
+        if (other.gameObject.CompareTag("Seat6"))
+        {
+            print("Sentou assento 6");
+            ChangeState(NPCState.Leaving);
+
+        }
+        if (other.gameObject.CompareTag("Seat7"))
+        {
+            print("Sentou assento 7");
+            ChangeState(NPCState.Leaving);
+
+        }
+
+        #endregion
 
     }
+
+
+
+
 
 }
