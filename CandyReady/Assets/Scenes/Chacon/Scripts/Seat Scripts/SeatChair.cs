@@ -16,11 +16,7 @@ public class SeatChair : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
-        {
-            occupied = true;
-            print("Player está em " + gameObject.name);
-        }
+
     }
 
 

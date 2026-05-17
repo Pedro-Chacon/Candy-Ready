@@ -1,9 +1,10 @@
-using MoreMountains.Tools;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
+using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
 using UnityEngine.AI;
+
 public class NPC : MonoBehaviour
 {
     [Header("Positions")]
@@ -13,32 +14,34 @@ public class NPC : MonoBehaviour
     [Header("Seats")]
     [SerializeField] SeatChair[] seats;
     [SerializeField] public float TimeEating = 5f;
+    private SeatChair currentSeat;
 
     [Header("Order Bubble")]
     [SerializeField] GameObject orderBubble;
     [SerializeField] TMPro.TextMeshProUGUI orderText;
 
-
     public int candyQuantity = 0;
 
     private NavMeshAgent navMeshAgent;
-    SeatChair seatChair;
 
     public NPCState currentState;
 
-
     private void Awake()
     {
-        
+
     }
+
     public enum NPCState
     {
         GoingToCounter,
         WaitingOrder,
         GoingToSeat,
         Eating,
-        Leaving
+        Leaving,
+        AwaitingForSeats,
+        LookingForSeats
     }
+
     void Start()
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
@@ -46,28 +49,40 @@ public class NPC : MonoBehaviour
         ChangeState(NPCState.GoingToCounter);
     }
 
-
     void Update()
     {
-        if (Input.GetButtonDown("Jump"))
-        {
-            ChangeState(NPCState.GoingToSeat);
-            DesactiveBubble();
-        }
+
     }
 
+    // FUNÇÕES
     public void ActiveBubble()
     {
         orderBubble.SetActive(true);
         orderText.enabled = true;
     }
+
     public void DesactiveBubble()
     {
-        orderBubble.SetActive(false);   
+        orderBubble.SetActive(false);
         orderText.enabled = false;
     }
 
+    public List<SeatChair> GetFreeSeats()
+    {
+        List<SeatChair> freeSeats = new List<SeatChair>();
 
+        foreach (SeatChair seat in seats)
+        {
+            if (seat.occupied == false)
+            {
+                freeSeats.Add(seat);
+            }
+        }
+
+        return freeSeats;
+    }
+
+    // ESTADOS DO NPC
     void ChangeState(NPCState newState)
     {
         currentState = newState;
@@ -86,60 +101,140 @@ public class NPC : MonoBehaviour
                 StartCoroutine(GoToSeat());
                 break;
 
+            case NPCState.Eating:
+                StartCoroutine(Eating());
+                break;
+
             case NPCState.Leaving:
-                StartCoroutine(EatAndLeave());
+                StartCoroutine(Leaving());
+                break;
+
+            case NPCState.AwaitingForSeats:
+                StartCoroutine(WaitingForSeats());
+                break;
+
+            case NPCState.LookingForSeats:
+                StartCoroutine(LookingForSeats());
                 break;
         }
     }
 
- 
-
-    IEnumerator EatAndLeave()
-    {
-        yield return new WaitForSeconds(TimeEating);
-        print("terminou de comer");
-        //AQUI PRECISAVA DEIXAR SEAT.OCCUPIED = FALSE
-        navMeshAgent.destination = exit.transform.position;
-    }
-
-    IEnumerator GoToSeat()
-    {
-        yield return new WaitForSeconds(1);
-        foreach(SeatChair seat in seats)
-        {
-            if (seat.occupied == false)
-            {
-                seat.occupied = true;
-                print("escolheu assento " + seat);
-                navMeshAgent.destination = seat.transform.position;
-                break;
-            }
-            else
-            {
-                print("TODAS AS CADEIRAS OCUPADAS!");
-            }
-        }
-    }
     IEnumerator CreateAnOrder()
     {
         yield return new WaitForSeconds(1);
 
         print("Criou Pedido");
-        candyQuantity = Random.Range(1, 5);
-        ActiveBubble();
-        orderText.text = candyQuantity.ToString();
-        print("quantidade do pedido: " + candyQuantity);
 
+        candyQuantity = Random.Range(1, 5);
+
+        ActiveBubble();
+
+        orderText.text = candyQuantity.ToString();
+
+        print("quantidade do pedido: " + candyQuantity);
     }
 
+    [ContextMenu("Pedido Recebido")]
+    public void ReceiveOrder()
+    {
+        DesactiveBubble();
+        ChangeState(NPCState.LookingForSeats);
+    }
 
+    IEnumerator LookingForSeats()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        print("PROCURANDO POR CADEIRA!");
+
+        yield return new WaitForSeconds(1);
+
+        List<SeatChair> freeSeats = GetFreeSeats();
+
+        if (freeSeats.Count <= 0)
+        {
+            print("Todas as cadeiras ocupadas!");
+
+            ChangeState(NPCState.AwaitingForSeats);
+        }
+        else
+        {
+            ChangeState(NPCState.GoingToSeat);
+        }
+    }
+
+    IEnumerator GoToSeat()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        List<SeatChair> freeSeats = GetFreeSeats();
+
+        if (freeSeats.Count <= 0)
+        {
+            ChangeState(NPCState.AwaitingForSeats);
+            yield break;
+        }
+
+        int aleatoryValue = Random.Range(0, freeSeats.Count);
+
+        SeatChair aleatoryChair = freeSeats[aleatoryValue];
+
+        currentSeat = aleatoryChair;
+
+        aleatoryChair.occupied = true;
+
+        print("escolheu assento " + aleatoryChair);
+
+        navMeshAgent.destination = aleatoryChair.transform.position;
+    }
+
+    IEnumerator Eating()
+    {
+        yield return new WaitForSeconds(TimeEating);
+
+        ChangeState(NPCState.Leaving);
+    }
+
+    IEnumerator Leaving()
+    {
+        currentSeat.occupied = false;
+
+        navMeshAgent.destination = exit.transform.position;
+
+        print("terminou de comer");
+
+        yield return null;
+    }
+
+    IEnumerator WaitingForSeats()
+    {
+        orderText.text = "!!!";
+
+        ActiveBubble();
+
+        while (true)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            List<SeatChair> freeSeats = GetFreeSeats();
+
+            if (freeSeats.Count > 0)
+            {
+                DesactiveBubble();
+
+                ChangeState(NPCState.GoingToSeat);
+
+                yield break;
+            }
+        }
+    }
+
+    // FIM DOS ESTADOS DO NPC
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("CounterPosition"))
         {
-           
             ChangeState(NPCState.WaitingOrder);
-            
         }
 
         if (other.gameObject.CompareTag("ExitPoint"))
@@ -147,63 +242,13 @@ public class NPC : MonoBehaviour
             Destroy(gameObject);
         }
 
-        #region SeatsTags
-        if (other.gameObject.CompareTag("Seat0"))
+        SeatChair seat = other.GetComponent<SeatChair>();
+
+        if (seat != null)
         {
-            print("Sentou assento 0");
-            ChangeState(NPCState.Leaving);
+            print("Sentou em " + seat.name);
 
-
+            ChangeState(NPCState.Eating);
         }
-        if (other.gameObject.CompareTag("Seat1"))
-        {
-            print("Sentou assento 1");
-            ChangeState(NPCState.Leaving);
-
-        }
-        if (other.gameObject.CompareTag("Seat2"))
-        {
-            print("Sentou assento 2");
-            ChangeState(NPCState.Leaving);
-
-        }
-        if (other.gameObject.CompareTag("Seat3"))
-        {
-            print("Sentou assento 3");
-            ChangeState(NPCState.Leaving);
-
-        }
-        if (other.gameObject.CompareTag("Seat4"))
-        {
-            print("Sentou assento 4");
-            ChangeState(NPCState.Leaving);
-
-        }
-        if (other.gameObject.CompareTag("Seat5"))
-        {
-            print("Sentou assento 5");
-            ChangeState(NPCState.Leaving);
-
-        }
-        if (other.gameObject.CompareTag("Seat6"))
-        {
-            print("Sentou assento 6");
-            ChangeState(NPCState.Leaving);
-
-        }
-        if (other.gameObject.CompareTag("Seat7"))
-        {
-            print("Sentou assento 7");
-            ChangeState(NPCState.Leaving);
-
-        }
-
-        #endregion
-
     }
-
-
-
-
-
 }
