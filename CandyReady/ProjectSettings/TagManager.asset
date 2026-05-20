@@ -10,6 +10,7 @@ TagManager:
   - PizzaPegar
   - NPC
   - ExitPoint
+  - ServeCustomer
   layers:
   - Default
   - TransparentFX

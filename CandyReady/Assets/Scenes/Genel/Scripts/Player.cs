@@ -1,3 +1,4 @@
+using MoreMountains.Feedbacks;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -14,7 +15,10 @@ public class Player : MonoBehaviour
     [SerializeField] InputActionReference moveAction;
 
     Vector2 movement;
+
+    [Header("Other References")]
     Rigidbody rb;
+    [SerializeField] QueueManager queueManager;
 
     private void Awake()
     {
@@ -49,4 +53,28 @@ public class Player : MonoBehaviour
         Vector3 move = transform.right * movement.x + transform.forward * movement.y;
         rb.linearVelocity = new Vector3(move.x * moveSpeed, rb.linearVelocity.y, move.z * moveSpeed);
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("ServeCustomer"))
+        {
+            if (queueManager.npcQueue.Count <= null)
+            {
+                print("NINGUEM NA FILA");
+                return;
+                
+            }
+
+            NPC fisrtNPC = queueManager.npcQueue[0];
+            if (fisrtNPC.currentState != NPC.NPCState.WaitingOrder)
+            {
+                print("NPC AINDA NÃO ESTA PRONTO PARA RECEBER");
+                return;
+            }
+            
+            fisrtNPC.ReceiveOrder();
+        }
+    }
+
+
 }

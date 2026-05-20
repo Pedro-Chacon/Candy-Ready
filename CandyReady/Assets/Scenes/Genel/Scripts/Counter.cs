@@ -18,6 +18,7 @@ public class Counter : MonoBehaviour
     [SerializeField] int gridSizeZ = 1;
 
     private float dropTimer = 0f;
+
     private List<GameObject> itemsOnCounter = new List<GameObject>();
 
     private void OnTriggerStay(Collider other)
@@ -37,8 +38,6 @@ public class Counter : MonoBehaviour
                     if (pizzaDropped != null)
                     {
                         PlaceItemOnCounter(pizzaDropped);
-                        Player.moneyScore += 75;
-                        print("Money: " + Player.moneyScore);
                     }
 
                     dropTimer = 0f;
@@ -52,6 +51,7 @@ public class Counter : MonoBehaviour
         int index = itemsOnCounter.Count;
 
         itemsOnCounter.Add(item);
+
         item.transform.SetParent(counterStackTranform);
 
         int x = index % gridSizeX;
@@ -61,6 +61,46 @@ public class Counter : MonoBehaviour
         Vector3 targetPosition = new Vector3(x * spacingX, y * itemHeight, z * spacingZ);
 
         item.transform.localPosition = targetPosition;
+
         item.transform.localRotation = Quaternion.identity;
+    }
+
+    public GameObject TakeItem()
+    {
+        if (itemsOnCounter.Count <= 0)
+        {
+            return null;
+        }
+
+        int lastIndex = itemsOnCounter.Count - 1;
+
+        GameObject item = itemsOnCounter[lastIndex];
+
+        itemsOnCounter.RemoveAt(lastIndex);
+
+        UpdateCounterVisual();
+
+        return item;
+    }
+
+    void UpdateCounterVisual()
+    {
+        for (int index = 0; index < itemsOnCounter.Count; index++)
+        {
+            GameObject item = itemsOnCounter[index];
+
+            int x = index % gridSizeX;
+            int y = index / (gridSizeZ * gridSizeX);
+            int z = (index / gridSizeX) % gridSizeZ;
+
+            Vector3 targetPosition = new Vector3(x * spacingX, y * itemHeight, z * spacingZ);
+
+            item.transform.localPosition = targetPosition;
+        }
+    }
+
+    public int GetPizzaCount()
+    {
+        return itemsOnCounter.Count;
     }
 }

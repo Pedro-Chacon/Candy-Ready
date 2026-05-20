@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
 using UnityEngine.AI;
+using static UnityEditor.Experimental.AssetDatabaseExperimental.AssetDatabaseCounters;
 
 public class NPC : MonoBehaviour
 {
@@ -13,22 +14,34 @@ public class NPC : MonoBehaviour
 
     [Header("Seats")]
     [SerializeField] SeatChair[] seats;
-    [SerializeField] public float TimeEating = 5f;
+    [SerializeField] public float TimeEating = 7f;
     private SeatChair currentSeat;
 
     [Header("Order Bubble")]
     [SerializeField] GameObject orderBubble;
     [SerializeField] TMPro.TextMeshProUGUI orderText;
 
+    [Header("Queue")]
+    [SerializeField] QueueManager queueManager;
+
+    [Header("Food")]
+    [SerializeField] Transform foodHoldPoint;
+
+
+    private List<GameObject> currentFoods = new List<GameObject>();
+
+    [SerializeField] Counter counter;
+
     public int candyQuantity = 0;
 
     private NavMeshAgent navMeshAgent;
 
     public NPCState currentState;
+    [SerializeField] Player player;
 
     private void Awake()
     {
-
+     
     }
 
     public enum NPCState
@@ -45,8 +58,42 @@ public class NPC : MonoBehaviour
     void Start()
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
+
         DesactiveBubble();
-        ChangeState(NPCState.GoingToCounter);
+
+        queueManager = FindAnyObjectByType<QueueManager>();
+
+        counter = FindAnyObjectByType<Counter>();
+
+        queueManager.AddToQueue(this);
+
+        
+
+        // Debugging
+        if (queueManager == null)
+        {
+            print("QUEUE MANAGER NULL");
+        }
+
+        if (counter == null)
+        {
+            print("COUNTER NULL");
+        }
+
+        if (orderBubble == null)
+        {
+            print("ORDER BUBBLE NULL");
+        }
+
+        if (orderText == null)
+        {
+            print("ORDER TEXT NULL");
+        }
+
+        if (foodHoldPoint == null)
+        {
+            print("FOOD HOLD POINT NULL");
+        }
     }
 
     void Update()
@@ -80,6 +127,11 @@ public class NPC : MonoBehaviour
         }
 
         return freeSeats;
+    }
+
+    public void MoveToPosition(Vector3 position)
+    {
+        navMeshAgent.destination = position;
     }
 
     // ESTADOS DO NPC
@@ -137,10 +189,46 @@ public class NPC : MonoBehaviour
     [ContextMenu("Pedido Recebido")]
     public void ReceiveOrder()
     {
-        DesactiveBubble();
-        ChangeState(NPCState.LookingForSeats);
+        StartCoroutine(PickupOrder());
     }
 
+    IEnumerator PickupOrder()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        // CHECA SE TEM COMIDA SUFICIENTE
+        if (counter.GetPizzaCount() < candyQuantity)
+        {
+            print("NÃO TEM COMIDA SUFICIENTE");
+            yield break;
+        }
+
+        // AGORA SIM remove da fila
+        queueManager.RemoveFromQueue(this);
+
+        DesactiveBubble();
+
+        currentFoods.Clear();
+
+        // PEGA TODAS AS PIZZAS
+        for (int i = 0; i < candyQuantity; i++)
+        {
+            GameObject pizza = counter.TakeItem();
+
+            if (pizza != null)
+            {
+                currentFoods.Add(pizza);
+
+                pizza.transform.SetParent(foodHoldPoint);
+
+                pizza.transform.localPosition = new Vector3(0, i * 0.25f, 0);
+
+                pizza.transform.localRotation = Quaternion.identity;
+            }
+        }
+
+        ChangeState(NPCState.LookingForSeats);
+    }
     IEnumerator LookingForSeats()
     {
         yield return new WaitForSeconds(0.1f);
@@ -172,6 +260,7 @@ public class NPC : MonoBehaviour
         if (freeSeats.Count <= 0)
         {
             ChangeState(NPCState.AwaitingForSeats);
+
             yield break;
         }
 
@@ -192,6 +281,16 @@ public class NPC : MonoBehaviour
     {
         yield return new WaitForSeconds(TimeEating);
 
+        foreach (GameObject food in currentFoods)
+        {
+            if (food != null)
+            {
+                Destroy(food);
+            }
+        }
+
+        currentFoods.Clear();
+
         ChangeState(NPCState.Leaving);
     }
 
@@ -202,6 +301,10 @@ public class NPC : MonoBehaviour
         navMeshAgent.destination = exit.transform.position;
 
         print("terminou de comer");
+
+        Player.moneyScore += 75;
+
+        print("Money: " + Player.moneyScore);
 
         yield return null;
     }
