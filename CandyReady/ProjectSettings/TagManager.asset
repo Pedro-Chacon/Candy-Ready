@@ -12,6 +12,7 @@ TagManager:
   - ExitPoint
   - ServeCustomer
   - TriggerIdle
+  - WatchAds
   layers:
   - Default
   - TransparentFX
