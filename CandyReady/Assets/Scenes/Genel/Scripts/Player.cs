@@ -6,7 +6,9 @@ public class Player : MonoBehaviour
 {
     [Header("Config Player")]
     [SerializeField] float moveSpeed = 6f;
-    [SerializeField] public static int moneyScore = 0;
+
+    public static int moneyScore = 0;
+
     [SerializeField] TextMeshProUGUI textMoney;
 
     [Header("Reference Inputs")]
@@ -33,7 +35,6 @@ public class Player : MonoBehaviour
         moveAction.action.Disable();
     }
 
-    
     void Update()
     {
         ReadInput();
@@ -56,23 +57,26 @@ public class Player : MonoBehaviour
     {
         if (other.gameObject.CompareTag("ServeCustomer"))
         {
-            if (queueManager.npcQueue.Count <= null)
-            {
-                print("NINGUEM NA FILA");
-                return;
-                
-            }
-
-            NPC fisrtNPC = queueManager.npcQueue[0];
-            if (fisrtNPC.currentState != NPC.NPCState.WaitingOrder)
-            {
-                print("NPC AINDA NÃO ESTA PRONTO PARA RECEBER");
-                return;
-            }
-            
-            fisrtNPC.ReceiveOrder();
+            TryDeliverOrder();
         }
     }
 
+    private void TryDeliverOrder()
+    {
+        if (queueManager == null || queueManager.npcQueue.Count == 0)
+        {
+            print("NINGUÉM NA FILA");
+            return;
+        }
 
+        NPC firstNPC = queueManager.npcQueue[0];
+
+        if (firstNPC.currentState != NPC.NPCState.WaitingOrder)
+        {
+            print("NPC AINDA NÃO ESTÁ PRONTO PARA RECEBER");
+            return;
+        }
+
+        firstNPC.ReceiveOrder();
+    }
 }

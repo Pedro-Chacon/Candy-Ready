@@ -1,5 +1,3 @@
-using HutongGames.PlayMaker.Actions;
-using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,11 +31,11 @@ public class Counter : MonoBehaviour
 
                 if (dropTimer >= dropRate)
                 {
-                    GameObject pizzaDropped = playerStack.DropItem();
+                    GameObject candyDropped = playerStack.DropItem();
 
-                    if (pizzaDropped != null)
+                    if (candyDropped != null)
                     {
-                        PlaceItemOnCounter(pizzaDropped);
+                        PlaceItemOnCounter(candyDropped);
                     }
 
                     dropTimer = 0f;
@@ -61,7 +59,6 @@ public class Counter : MonoBehaviour
         Vector3 targetPosition = new Vector3(x * spacingX, y * itemHeight, z * spacingZ);
 
         item.transform.localPosition = targetPosition;
-
         item.transform.localRotation = Quaternion.identity;
     }
 
@@ -99,7 +96,7 @@ public class Counter : MonoBehaviour
         }
     }
 
-    public int GetPizzaCount()
+    public int GetCandyCount()
     {
         return itemsOnCounter.Count;
     }

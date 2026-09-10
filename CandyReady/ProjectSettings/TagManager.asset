@@ -11,6 +11,7 @@ TagManager:
   - NPC
   - ExitPoint
   - ServeCustomer
+  - TriggerIdle
   layers:
   - Default
   - TransparentFX
