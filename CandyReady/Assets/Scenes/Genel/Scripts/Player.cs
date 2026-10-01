@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour
 {
     [Header("Config Player")]
-    [SerializeField] float moveSpeed = 6f;
+    [SerializeField]public  static float moveSpeed = -6f;
 
     public static int moneyScore = 0;
 

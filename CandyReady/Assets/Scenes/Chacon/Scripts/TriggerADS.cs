@@ -4,26 +4,43 @@ using UnityEngine.UI;
 
 public class TriggerADS : MonoBehaviour
 {
-    [SerializeField] GameObject CanvaAds;
+    [SerializeField] GameObject PainelAds;
     [SerializeField] Button buttonInitializerAds;
+    [SerializeField] Button buttonCloseAds;
 
     private void Start()
     {
-        buttonInitializerAds.onClick.AddListener(ShowAds);   
+        buttonInitializerAds.onClick.AddListener(ShowAds);
+        buttonCloseAds.onClick.AddListener(FecharAds);
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.CompareTag("Player"))
+        if (other.gameObject.CompareTag("Player"))
         {
-            CanvaAds.SetActive(true);
+            AbrirAds();
         }
     }
+
+
+    void AbrirAds()
+    {
+        PainelAds.SetActive(true);
+        Time.timeScale = 0f;
+    }
+
+    void FecharAds()
+    {
+        PainelAds.SetActive(false);
+        Time.timeScale = 1f;
+    }
+
 
     void ShowAds()
     {
         GameObject.Find("AdsInitializer").GetComponent<AdsInitializer>().LoadInterstitialAd();
         GameObject.Find("AdsInitializer").GetComponent<AdsInitializer>().ShowInterstitialAd();
+        Player.moneyScore += 300;
     }
 
 }
