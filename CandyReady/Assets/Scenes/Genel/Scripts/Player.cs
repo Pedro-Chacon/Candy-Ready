@@ -5,9 +5,12 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour
 {
     [Header("Config Player")]
-    [SerializeField]public  static float moveSpeed = -6f;
+    [SerializeField] public static float moveSpeed = -6f;
 
     public static int moneyScore = 0;
+
+    // Último valor salvo, pra só salvar quando o dinheiro mudar
+    private int lastSavedMoney;
 
     [SerializeField] TextMeshProUGUI textMoney;
 
@@ -25,6 +28,13 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
+    private void Start()
+    {
+        // Carrega o dinheiro salvo (New Game já zerou no menu)
+        moneyScore = DataManager.LoadMoney();
+        lastSavedMoney = moneyScore;
+    }
+
     private void OnEnable()
     {
         moveAction.action.Enable();
@@ -40,6 +50,27 @@ public class Player : MonoBehaviour
         ReadInput();
         Movement();
         textMoney.text = "MONEY: " + moneyScore;
+        SaveMoneyIfChanged();
+    }
+
+    void SaveMoneyIfChanged()
+    {
+        if (moneyScore != lastSavedMoney)
+        {
+            DataManager.SaveMoney(moneyScore);
+            lastSavedMoney = moneyScore;
+        }
+    }
+
+    // Garante o save no mobile quando o app vai pro segundo plano
+    private void OnApplicationPause(bool paused)
+    {
+        if (paused) DataManager.SaveMoney(moneyScore);
+    }
+
+    private void OnApplicationQuit()
+    {
+        DataManager.SaveMoney(moneyScore);
     }
 
     void ReadInput()
